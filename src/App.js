@@ -1,20 +1,58 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import TodoInput from "./TodoInput";
+import "./App.css";
+import TodoList from "./TodoList";
 
 class App extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      tasks: [
+        {
+          title: 'デフォルトTODO',
+          id: 0,
+        }
+      ],
+      uniqueId: 1
+    }
+    this.addTodo = this.addTodo.bind(this)
+    this.resetTodo = this.resetTodo.bind(this)
+  }
+
+  addTodo(title) {
+    const {
+      tasks,
+      uniqueId
+    } = this.state;
+
+    tasks.push({
+      title,
+      id: uniqueId
+    });
+
+    this.setState({
+      tasks,
+      uniqueId: uniqueId + 1
+    })
+  }
+
+  resetTodo() {
+    this.setState({
+      tasks: []
+    })
+  }
+
   render() {
+
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
+      <div>
+        <h1>TODO App</h1>
+        <button onClick={this.resetTodo}>リセット</button>
+        <TodoInput addTodo={this.addTodo} />
+        <TodoList tasks={this.state.tasks} />
       </div>
-    );
+    )
   }
 }
 
