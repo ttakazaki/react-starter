@@ -1,28 +1,67 @@
-import React from 'react';
-import { render } from 'react-dom';
-import { Route } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import { ConnectedRouter } from 'react-router-redux';
-import createBrowserHistory from 'history/createBrowserHistory';
-import TodoApp from './containers/TodoApp';
-import Error from './components/Error';
-import createStore from './store';
+import React from 'react'
+import {Provider} from 'react-redux'
+import {createStore, applyMiddleware} from 'redux'
 
-// historyのインスタンスを生成
-const history = createBrowserHistory();
+import Todo from './components/Todo'
+import ReactDOM from 'react-dom'
 
-// Storeの生成
-const store = createStore(history);
+const initialState = {
+  task: '',
+  tasks: []
+}
 
-render(
+function tasksReducer (state = initialState, action) {
+  switch (action.type) {
+    case 'INPUT_TASK':
+      return {
+        ...state,
+        task: action.task
+      }
+    case 'ADD_TASK':
+      return {
+        ...state,
+        tasks: state.tasks.concat([action.task])
+      }
+    default:
+      return state;
+  }
+}
+
+// ログミドルウェア
+const logger = store => next => action => {
+  // Action適用前のstateを表示
+  console.log(store.getState())
+
+  // どのようなActionが適用されたのかを表示
+  console.log(action)
+
+  const result = next(action)
+
+  // Action適用後のstateを表示
+  console.log(store.getState())
+  console.log('-----------------')
+
+  // 特別なreturnする必要がないのでresultをそのまま返す
+  return result
+}
+
+const storageMiddleware = store => next => action => {
+  const result = next(action)
+  window.localStorage.setItem('app-state', JSON.stringify(store.getState()))
+  return result
+}
+
+const savedState = JSON.parse(localStorage.getItem('app-state'))
+const store = createStore(
+  tasksReducer,
+  savedState ? savedState : tasksReducer(undefined, {type: 'Init'}),
+  applyMiddleware(logger,storageMiddleware)
+)
+
+ReactDOM.render(
   <Provider store={store}>
-    <ConnectedRouter history={history}>
-      <div>
-        {/* ルーティングさせる */}
-        <Route exact path="/" component={TodoApp} />
-        <Route path="/error" component={Error} />
-      </div>
-    </ConnectedRouter>
+    <Todo />
   </Provider>,
   document.getElementById('root')
-);
+)
+
